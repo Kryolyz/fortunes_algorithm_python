@@ -1,1 +1,2 @@
-from avl_tree_tests import *
+from . import avl_tree_tests
+from . import beachline_tests

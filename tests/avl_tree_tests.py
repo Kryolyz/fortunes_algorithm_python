@@ -1,8 +1,4 @@
 import unittest
-import coverage
-
-# cov = coverage.Coverage()
-# cov.start()
 
 from utils.avl_tree import AVL_Tree
 from utils.arc import Site, Arc
@@ -52,13 +48,6 @@ class TestAVL_Tree(unittest.TestCase):
         self.assertEqual(self.tree.get_balance(self.tree.root), 0)
         self.tree.add_site(Site(2, 2))
         self.assertEqual(self.tree.get_balance(self.tree.root), 1)
-
-    def test_more_balancing(self):
-        self.tree.add_site(Site(0, 4))
-        self.tree.add_site(Site(0, 2))
-        self.tree.add_site(Site(0, 18))
-        self.tree.add_site(Site(0, 5))
-        self.tree.add_site(Site(0, 12))
 
     def test_delete(self):
         self.tree.add_site(Site(0, 10))

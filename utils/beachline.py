@@ -26,8 +26,9 @@ class Beachline:
         :param sweep_y: The y-coordinate of the sweep line
         :return: The x-coordinate of the intersection, or None if there is no intersection
         """
+        print("Intersecting arcs:", arc, other_arc)
         if arc.site.y == sweep_y or other_arc.site.y == sweep_y:
-            return None  # Handle edge case when site is on the sweep line
+            return None, None  # Handle edge case when site is on the sweep line
 
         if arc.site.y == other_arc.site.y:
             return arc.site.x + (other_arc.site.x - arc.site.x) / 2
@@ -50,17 +51,20 @@ class Beachline:
 
         # Solve the quadratic equation for x
         discriminant = b**2 - 4 * a * c
+        print("Discriminant:", discriminant)
         if discriminant < 0:
-            return None  # No real solutions means no intersection
+            return None, None  # No real solutions means no intersection
 
         # print("Discriminant:", math.sqrt(discriminant))
         x1 = (-b + math.sqrt(discriminant)) / (2 * a)
         x2 = (-b - math.sqrt(discriminant)) / (2 * a)
 
-        # Return the x-coordinate that is within range
-        # (Choose based on beachline position or sweep line orientation)
-        print("X1:", x1, "X2:", x2)
-        return (min(x1, x2), max(x1, x2))
+        # closer_solution = min(
+        #     x1, x2, key=lambda x: abs(x - arc.site.x)
+        # )  # Select the solution that's closer to arc.site.x
+
+        print("X1:", x1, "X2:", x2, "Closer solution:", closer_solution)
+        return x1, x2
 
     def find_arc(self, x, sweep_y):
         """
@@ -80,18 +84,21 @@ class Beachline:
         node = self.first_arc
         while node:
             # get intersection on both sides to find the range of the current arc
-            left_intersection_near, left_intersection_far = self.get_left_intersection(
-                node, sweep_y
-            )
-            right_intersection_far, right_intersection_near = (
-                self.get_right_intersection(node, sweep_y)
-            )
-            left_intersection = left_intersection_near
-            right_intersection = right_intersection_near
+            left_intersection = self.get_left_intersection(node, sweep_y)
+            right_intersection = self.get_right_intersection(node, sweep_y)
 
             print(
                 f"Left Intersection: {left_intersection}, Right Intersection: {right_intersection}, X: {x}, Arc: {node}"
             )
+
+            # if left_intersection is None and right_intersection:
+            #     node = node.right_neighbor
+            #     continue
+            # elif right_intersection is None and left_intersection:
+            #     node = node.left_neighbor
+            #     continue
+            # elif left_intersection is None and right_intersection is None:
+            #     return None, None
 
             # we can assume that all nodes are valid leafs because old ones get deleted, so no need to check if they are valid leafs
             if left_intersection <= x <= right_intersection:
@@ -147,15 +154,15 @@ class Beachline:
 
         if arc_to_split.right_neighbor:
             right_arc.right_neighbor = arc_to_split.right_neighbor
+            right_arc.right_neighbor.left_neighbor = right_arc
         if arc_to_split.left_neighbor:
             left_arc.left_neighbor = arc_to_split.left_neighbor
+            left_arc.left_neighbor.right_neighbor = left_arc
 
         if arc_to_split.left_edge:
             left_arc.left_edge = arc_to_split.left_edge
         if arc_to_split.right_edge:
             right_arc.right_edge = arc_to_split.right_edge
-
-        # self.replace_arc(arc_to_split, left_arc, middle_arc, right_arc)
 
         return left_arc, middle_arc, right_arc
 
@@ -168,15 +175,15 @@ class Beachline:
 
     def get_left_intersection(self, arc: Arc, sweep_y):
         if not arc.left_neighbor:
-            return float("-inf"), float("-inf")
+            return float("-inf")
 
-        return self.intersect_x(arc, arc.left_neighbor, sweep_y)
+        return self.intersect_x(arc, arc.left_neighbor, sweep_y)[0]
 
     def get_right_intersection(self, arc: Arc, sweep_y):
         if not arc.right_neighbor:
-            return float("inf"), float("inf")
+            return float("inf")
 
-        return self.intersect_x(arc, arc.right_neighbor, sweep_y)
+        return self.intersect_x(arc, arc.right_neighbor, sweep_y)[1]
 
     def replace_arc(self, arc, left_arc, middle_arc, right_arc):
         self.tree.remove(arc)

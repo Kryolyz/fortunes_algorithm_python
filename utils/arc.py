@@ -56,3 +56,18 @@ class Arc:
 
     def __str__(self) -> str:
         return f"Arc {self.site.x} {self.site.y}"
+
+    def __eq__(self, other):
+        if not isinstance(other, Arc):
+            return False
+        if self.site != other.site:
+            return False
+        if self.left_neighbor != other.left_neighbor:
+            return False
+        if self.right_neighbor != other.right_neighbor:
+            return False
+        if self.left_edge != other.left_edge:
+            return False
+        if self.right_edge != other.right_edge:
+            return False
+        return True

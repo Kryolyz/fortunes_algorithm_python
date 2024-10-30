@@ -1,5 +1,4 @@
 import unittest
-import coverage
 
 from utils.avl_tree import AVL_Tree
 from utils.beachline import Beachline
@@ -61,30 +60,37 @@ class Test_Beachline(unittest.TestCase):
 
     def test_insert_arc_propagation(self):
         # test insertion and propagation of neighbors and edges
-        site1 = Arc(Site(0, 0))
-        site2 = Arc(Site(3, 1))
-        site3 = Arc(Site(3, 2))
+        site1 = Arc(Site(1, 0))
+        site2 = Arc(Site(2, 1))
+        site3 = Arc(Site(3, 3))
+        site4 = Arc(Site(5, 4))
 
-        left, middle, right = self.beachline.insert_arc(site1, 1)
-        print("Left Arc:", left)
-        print("Middle Arc:", middle)
-        print("Right Arc:", right)
-        left, middle, right = self.beachline.insert_arc(site2, 2)
-        print("Left Arc:", left)
-        print("Middle Arc:", middle)
-        print("Right Arc:", right)
+        left, middle, right = self.beachline.insert_arc(site1, 3)
+        # print("Left Arc:", left)
+        # print("Middle Arc:", middle)
+        # print("Right Arc:", right)
+
+        left, middle, right = self.beachline.insert_arc(site2, 4)
+        # print("Left Arc:", left)
+        # print("Middle Arc:", middle)
+        # print("Right Arc:", right)
+
+        left, middle, right = self.beachline.insert_arc(site3, 5)
         arc = self.beachline.first_arc
         while arc:
-            print("Arc:", arc)
+            print(
+                "Arc:",
+                arc,
+                "Left Neighbor:",
+                arc.left_neighbor,
+                "Right Neighbor:",
+                arc.right_neighbor,
+            )
             arc = arc.right_neighbor
-        left, middle, right = self.beachline.insert_arc(site3, 3)
-        print("Left Arc:", left)
-        print("Middle Arc:", middle)
-        print("Right Arc:", right)
-        arc = self.beachline.first_arc
-        while arc:
-            print("Arc:", arc)
-            arc = arc.right_neighbor
+        left, middle, right = self.beachline.insert_arc(site4, 4)
+        # print("Left Arc:", left)
+        # print("Middle Arc:", middle)
+        # print("Right Arc:", right)
 
         print("Left Neighbor of Left Arc:", left.left_neighbor)
         print("Right Neighbor of Left Arc:", left.right_neighbor)
@@ -99,7 +105,12 @@ class Test_Beachline(unittest.TestCase):
             ("None" if right.right_neighbor is None else (right.right_neighbor)),
         )
 
-        self.assertEqual(left.left_neighbor, site2)
+        arc = self.beachline.first_arc
+        while arc:
+            print("Arc:", arc)
+            arc = arc.right_neighbor
+
+        self.assertEqual(left.left_neighbor, site1)
         self.assertEqual(left.right_neighbor, middle)
         self.assertEqual(middle.left_neighbor, left)
         self.assertEqual(middle.right_neighbor, right)

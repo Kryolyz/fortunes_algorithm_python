@@ -2,5 +2,7 @@
 [run]
 omit = 
     */tests/*
+source = 
+    */utils/*
 [html]
 directory = coverage_html_report  

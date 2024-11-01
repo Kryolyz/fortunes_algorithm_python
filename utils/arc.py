@@ -32,6 +32,9 @@ class Site:
             return Site(self.x - other.x, self.y - other.y)
         return NotImplemented
 
+    def length(self):
+        return sqrt(self.x**2 + self.y**2)
+
     def find_circumcenter(self, B, C):
         # Calculate the midpoints of AB and BC
         D = ((self.x + B.x) / 2, (self.y + B.y) / 2)
@@ -59,7 +62,7 @@ class Site:
                 )
                 circumcenter_y = m_AB_perp * (circumcenter_x - D[0]) + D[1]
             except:
-                return Site(float("inf"), float("inf"))
+                return Site(float("inf"), float("inf")), float("inf")
         circumcradius = sqrt(
             (self.x - circumcenter_x) ** 2 + (self.y - circumcenter_y) ** 2
         )
@@ -96,3 +99,21 @@ class Arc:
         if self.right_edge != other.right_edge:
             return False
         return True
+
+    def evaluate_arc(self, x, sweep_y):
+        """
+        Evaluate the parabolic equation y = (1 / (2 * (y_p1 - y_sweep))) * (x - x_p1)^2 + ((y_p1 + y_sweep) / 2)
+
+        Parameters:
+        x (float): The x-coordinate
+        y_p1 (float): The y-coordinate of the vertex
+        y_sweep (float): The sweep value
+        x_p1 (float): The x-coordinate of the vertex
+
+        Returns:
+        float: The y-coordinate corresponding to the given x
+        """
+        y = (1 / (2 * (self.site.y - sweep_y))) * (x - self.site.x) ** 2 + (
+            (self.site.y + sweep_y) / 2
+        )
+        return y

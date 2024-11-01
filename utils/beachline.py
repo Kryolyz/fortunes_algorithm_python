@@ -1,6 +1,6 @@
 import math
 
-from .dcel import Face, HalfEdge
+from .dcel import Face, HalfEdge, Vertex
 from .avl_tree import AVL_Tree
 from .arc import Arc, Site
 from .events import CircleEvent, SiteEvent
@@ -8,10 +8,9 @@ from .events import CircleEvent, SiteEvent
 
 class Beachline:
     def __init__(self):
-        self.tree = AVL_Tree()
         self.first_arc = None
         self.faces: dict[Site, Face] = {}
-        self.vertices: list[Site] = []
+        self.vertices: list[Vertex] = []
         self.edges: list[HalfEdge] = []
 
     def intersect_x(self, arc, other_arc, sweep_y):
@@ -93,6 +92,29 @@ class Beachline:
 
         return None
 
+    def get_beachline(self, sweep_y, positions: list[float]):
+        y_values = []
+        node = self.first_arc
+
+        for x in positions:
+            while node:
+                left_intersection = self.get_left_intersection(node, sweep_y)
+                right_intersection = self.get_right_intersection(node, sweep_y)
+
+                # print("Left intersection:", left_intersection)
+                # print("Right intersection:", right_intersection)
+
+                if left_intersection <= x <= right_intersection:
+                    y_values.append(node.evaluate_arc(x, sweep_y))
+                    break
+
+                if x < left_intersection:
+                    node = node.left_neighbor
+                else:
+                    node = node.right_neighbor
+
+        return y_values
+
     def get_face(self, site: Site):
         if site not in self.faces.keys():
             # print("Creating new face for site:", site)
@@ -118,7 +140,6 @@ class Beachline:
 
         if not arc_to_split:
             self.first_arc = new_arc
-            self.tree.add(new_arc)
             return None, new_arc, None
 
         # insert new arcs for splitting. The old one is split in two, so the left and right arcs originate from the same site
@@ -170,7 +191,13 @@ class Beachline:
 
     def handle_circle_event(self, circle_event: CircleEvent):
         self.remove_arc(circle_event.middle_arc)
-        vertex = circle_event.circumcenter
+
+        vertex = Vertex(circle_event.circumcenter)
+        vertex.origin_sites = [
+            circle_event.left_arc.site,
+            circle_event.middle_arc.site,
+            circle_event.right_arc.site,
+        ]
         self.vertices.append(vertex)
 
         # get both faces
@@ -202,3 +229,10 @@ class Beachline:
 
         circle_event.left_arc.right_edge = left_half_edge
         circle_event.right_arc.left_edge = right_half_edge
+
+        if circle_event.left_arc.right_neighbor:
+            circle_event.left_arc.right_neighbor = circle_event.right_arc
+        if circle_event.right_arc.left_neighbor:
+            circle_event.right_arc.left_neighbor = circle_event.left_arc
+
+        return circle_event.left_arc, circle_event.middle_arc, circle_event.right_arc

@@ -1,6 +1,28 @@
 from utils.arc import Site
 
 
+class Vertex(Site):
+    def __init__(self, site: Site):
+        super().__init__(site.x, site.y)
+        self.origin_sites: list[Site] = []
+
+    def __str__(self):
+        return f"Vertex({self.x}, {self.y})"
+
+    def make_edge_directions(self):
+        directions = []
+        for origin1, origin2 in [
+            (self.origin_sites[i], self.origin_sites[j])
+            for i in range(3)
+            for j in range(i + 1, 3)
+        ]:
+            midpoint = (origin1 + origin2) / 2
+            direction = midpoint - self
+            length = direction.length()
+            directions.append(direction / length)
+        return directions
+
+
 class HalfEdge:
     def __init__(self, origin: Site, face=None):
         self.origin: Site = origin  # Start vertex of the half-edge
@@ -16,7 +38,9 @@ class HalfEdge:
         if not self.twin or not self.face or not self.twin.face:
             return [0, 0]
         midpoint = (self.face.site + self.twin.face.site) / 2
-        return midpoint - self.origin
+        direction = midpoint - self.origin
+        length = (direction.x**2 + direction.y**2) ** 0.5
+        return Site(direction.x / length, direction.y / length)
 
 
 class Face:

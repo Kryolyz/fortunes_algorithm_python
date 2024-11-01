@@ -2,7 +2,7 @@
 [run]
 omit = 
     */tests/*
-source = 
-    */utils/*
+    */__init__.py
+
 [html]
 directory = coverage_html_report  

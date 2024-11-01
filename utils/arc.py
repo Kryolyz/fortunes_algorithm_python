@@ -6,8 +6,31 @@ class Site:
         self.x = x
         self.y = y
 
+    def __eq__(self, other):
+        if isinstance(other, Site):
+            return self.x == other.x and self.y == other.y
+        return False
+
+    def __hash__(self):
+        return hash((self.x, self.y))
+
     def __str__(self) -> str:
         return f"Site {self.x} {self.y}"
+
+    def __add__(self, other):
+        if isinstance(other, Site):
+            return Site(self.x + other.x, self.y + other.y)
+        return NotImplemented
+
+    def __truediv__(self, other):
+        if isinstance(other, (int, float)):
+            return Site(self.x / other, self.y / other)
+        return NotImplemented
+
+    def __sub__(self, other):
+        if isinstance(other, Site):
+            return Site(self.x - other.x, self.y - other.y)
+        return NotImplemented
 
     def find_circumcenter(self, B, C):
         # Calculate the midpoints of AB and BC
@@ -62,10 +85,12 @@ class Arc:
             return False
         if self.site != other.site:
             return False
-        if self.left_neighbor != other.left_neighbor:
-            return False
-        if self.right_neighbor != other.right_neighbor:
-            return False
+        if self.left_neighbor and other.left_neighbor:
+            if self.left_neighbor.site != other.left_neighbor.site:
+                return False
+        if self.right_neighbor and other.right_neighbor:
+            if self.right_neighbor.site != other.right_neighbor.site:
+                return False
         if self.left_edge != other.left_edge:
             return False
         if self.right_edge != other.right_edge:

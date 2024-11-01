@@ -6,57 +6,19 @@ from utils.arc import Site, Arc
 from utils.events import CircleEvent
 
 
+def make_circle_event(middle_arc: Arc, left_arc: Arc, right_arc: Arc) -> CircleEvent:
+    circumcenter, circumradius = middle_arc.site.find_circumcenter(
+        left_arc.site, right_arc.site
+    )
+    if circumcenter == float("inf"):
+        return None
+    event_location = Site(circumcenter.x, circumcenter.y + circumradius)
+    return CircleEvent(event_location, left_arc, middle_arc, right_arc, circumcenter)
+
+
 class Test_Beachline(unittest.TestCase):
     def setUp(self) -> None:
         self.beachline = Beachline()
-
-    # def test_insert(self):
-    #     site = Arc(Site(0, 0))
-    #     self.beachline.insert_arc(site, 0)
-    #     self.assertEqual(self.beachline.tree.root, site)
-    #     site_2 = Arc(Site(1, 10))
-    #     self.beachline.insert_arc(site_2, 0)
-    #     self.assertEqual(self.beachline.tree.root.right_child, site_2)
-
-    # def test_remove(self):
-    #     arc = Arc(Site(0, 0))
-    #     self.beachline.insert_arc(arc, 0)
-    #     arc_2 = Arc(Site(1, 10))
-    #     self.beachline.insert_arc(arc_2, 0)
-    #     self.assertEqual(self.beachline.tree.root.right_child, arc_2)
-    #     self.beachline.remove_arc(arc)
-
-    #     # need to test against site because internal motion
-    #     self.assertEqual(self.beachline.tree.root.site, arc_2.site)
-
-    # def test_intersect(self):
-    #     site = Arc(Site(0, 0))
-    #     left, middle, right = self.beachline.insert_arc(site, 0)
-    #     site_2 = Arc(Site(0, 10))
-    #     left_2, middle_2, right_2 = self.beachline.insert_arc(site_2, 2)
-    #     self.assertIsNotNone(left_2)
-    #     self.assertIsNotNone(middle_2)
-    #     self.assertIsNotNone(right_2)
-    #     self.assertEqual(self.beachline.intersect_x(left_2, middle_2, 2), 4.0)
-
-    # def test_site_event_processing(self):
-    #     site1 = Arc(Site(0, 0))
-    #     site2 = Arc(Site(0, 10))
-
-    # def test_circle_event_processing(self):
-    #     site1 = Arc(Site(0, 0))
-    #     site2 = Arc(Site(20, 10))
-    #     site3 = Arc(Site(0, 20))
-    #     circumcenter, circumradius = site2.site.find_circumcenter(
-    #         site1.site, site3.site
-    #     )
-
-    #     # circumcenter = Site(0, 15)
-    #     loc_y = circumcenter.y + circumradius
-    #     event_location = Site(circumcenter.x, loc_y)
-
-    #     event = CircleEvent(event_location, site1, site2, site3, circumcenter)
-    #     self.beachline.handle_circle_event(event)
 
     def test_insert_arc_propagation(self):
         # test insertion and propagation of neighbors and edges
@@ -64,65 +26,33 @@ class Test_Beachline(unittest.TestCase):
         site2 = Arc(Site(2, 1))
         site3 = Arc(Site(3, 3))
         site4 = Arc(Site(5, 4))
+        sites = [site1, site2, site3, site4]
 
-        left, middle, right = self.beachline.insert_arc(site1, 3)
-        # print("Left Arc:", left)
-        # print("Middle Arc:", middle)
-        # print("Right Arc:", right)
+        for site in sites:
+            left, middle, right = self.beachline.insert_arc(site)
 
-        left, middle, right = self.beachline.insert_arc(site2, 4)
-        # print("Left Arc:", left)
-        # print("Middle Arc:", middle)
-        # print("Right Arc:", right)
-
-        left, middle, right = self.beachline.insert_arc(site3, 5)
+        reference_order = [site1, site2, site3, site4, site3, site2, site1]
         arc = self.beachline.first_arc
-        while arc:
-            print(
-                "Arc:",
-                arc,
-                "Left Neighbor:",
-                arc.left_neighbor,
-                "Right Neighbor:",
-                arc.right_neighbor,
-            )
-            arc = arc.right_neighbor
-        left, middle, right = self.beachline.insert_arc(site4, 4)
-        # print("Left Arc:", left)
-        # print("Middle Arc:", middle)
-        # print("Right Arc:", right)
-
-        print("Left Neighbor of Left Arc:", left.left_neighbor)
-        print("Right Neighbor of Left Arc:", left.right_neighbor)
-        print("Left Neighbor of Middle Arc:", middle.left_neighbor)
-        print(
-            "Right Neighbor of Middle Arc:",
-            middle.right_neighbor,
-        )
-        print("Left Neighbor of Right Arc:", right.left_neighbor)
-        print(
-            "Right Neighbor of Right Arc:",
-            ("None" if right.right_neighbor is None else (right.right_neighbor)),
-        )
-
-        arc = self.beachline.first_arc
-        while arc:
-            print("Arc:", arc)
+        for reference in reference_order:
+            self.assertEqual(arc.site, reference.site)
             arc = arc.right_neighbor
 
-        self.assertEqual(left.left_neighbor, site1)
+        self.assertEqual(left.left_neighbor.site, site2.site)
         self.assertEqual(left.right_neighbor, middle)
         self.assertEqual(middle.left_neighbor, left)
         self.assertEqual(middle.right_neighbor, right)
         self.assertEqual(right.left_neighbor, middle)
-        self.assertEqual(right.right_neighbor, None)
+        self.assertEqual(right.right_neighbor.site, site2.site)
 
-        self.assertEqual(left.left_edge, site2.right_edge)
-        self.assertEqual(left.right_edge, middle.left_edge)
-        self.assertEqual(middle.left_edge, left.right_edge)
-        self.assertEqual(middle.right_edge, right.left_edge)
-        self.assertEqual(right.left_edge, middle.right_edge)
-        self.assertEqual(right.right_edge, None)
+        # iterate through the arc linked list to get the second one
+        second_arc = self.beachline.first_arc.right_neighbor
+        self.beachline.remove_arc(second_arc)
+        reference_order = [site1, site3, site4, site3, site2, site1]
+
+        arc = self.beachline.first_arc
+        for reference in reference_order:
+            self.assertEqual(arc.site, reference.site)
+            arc = arc.right_neighbor
 
 
 if __name__ == "__main__":

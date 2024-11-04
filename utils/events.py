@@ -35,4 +35,15 @@ class CircleEvent(Event):
         self.circumcenter = circumcenter
 
     def __str__(self):
-        return f"CircleEvent {self.site.x} {self.site.y}"
+        return f"CircleEvent {self.site.x} {self.site.y} (circumcenter: {self.circumcenter.x}, {self.circumcenter.y})"
+
+    def __eq__(self, other):
+        if not isinstance(other, CircleEvent):
+            return NotImplemented
+        return (
+            self.site == other.site
+            and self.circumcenter == other.circumcenter
+            and self.left_arc == other.left_arc
+            and self.middle_arc == other.middle_arc
+            and self.right_arc == other.right_arc
+        )

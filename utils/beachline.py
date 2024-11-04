@@ -92,6 +92,15 @@ class Beachline:
 
         return None
 
+    def find_arc_by_ref(self, arc: Arc):
+        node = self.first_arc
+        while node:
+            if node == arc:
+                return node
+            if node != arc:
+                node = node.right_neighbor
+        return None
+
     def get_beachline(self, sweep_y, positions: list[float]):
         y_values = []
         node = self.first_arc
@@ -135,7 +144,6 @@ class Beachline:
         """
 
         sweep_y = new_arc.site.y + 0.01
-        print("Inserting arc:", new_arc)
         arc_to_split = self.find_arc(new_arc.site.x, sweep_y)
 
         if not arc_to_split:

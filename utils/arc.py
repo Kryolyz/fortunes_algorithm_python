@@ -8,7 +8,7 @@ class Site:
 
     def __eq__(self, other):
         if isinstance(other, Site):
-            return self.x == other.x and self.y == other.y
+            return abs(self.x - other.x) < 0.001 and abs(self.y - other.y) < 0.001
         return False
 
     def __hash__(self):

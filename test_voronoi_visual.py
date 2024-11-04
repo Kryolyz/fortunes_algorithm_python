@@ -6,9 +6,9 @@ from utils.voronoi_diagram import VoronoiDiagram
 voronoi_diagram = VoronoiDiagram()
 import random
 
-random.seed(0)
+random.seed(1)
 sites = [Arc(Site(random.uniform(0, 10), random.uniform(0, 10))) for _ in range(7)]
-for site in sites:
+for site in sorted(sites, key=lambda site: site.site.y):
     print(site)
 
 
@@ -33,26 +33,37 @@ def visualize_vertices(ax, vertices):
 
 voronoi_diagram.add_site_events(sites)
 beachlines = []
-x_values = [i * 0.01 for i in range(int(10 / 0.01) + 1)]
+x_values = [i * 0.01 - 6 for i in range(int(26 / 0.01) + 1)]
 y_resolution = 0.1
 y_values = []
+data = []
+step = 0
 while not voronoi_diagram.event_queue.is_empty():
-    current_step = {
-        "vertices": copy(voronoi_diagram.beachline.vertices),
-        "edges": copy(voronoi_diagram.beachline.edges),
-        "faces": {k: copy(v) for k, v in voronoi_diagram.beachline.faces.items()},
-    }
-    voronoi_diagram.process_next_event()
+    voronoi_diagram.process_next_event(step)
     sorted_events = sorted(
         voronoi_diagram.event_queue.queue, key=lambda event: event.site.y
     )
     next_event_y = sorted_events[0].site.y if sorted_events else None
     current_y = voronoi_diagram.sweep_y
-    while next_event_y and current_y < next_event_y:
+    while (
+        next_event_y
+        and current_y < next_event_y
+        or (not next_event_y and current_y < 12)
+    ):
+        data.append(
+            {
+                "vertices": copy(voronoi_diagram.beachline.vertices),
+                "edges": copy(voronoi_diagram.beachline.edges),
+                "faces": {
+                    k: copy(v) for k, v in voronoi_diagram.beachline.faces.items()
+                },
+            }
+        )
         y_values.append(
             voronoi_diagram.beachline.get_beachline(current_y + 0.001, x_values)
         )
         current_y += y_resolution
+        step += 1
 
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Button, Slider, TextBox
@@ -67,8 +78,8 @@ def update_plot(step):
     ax.cla()  # Clear the current plot area
     ax.plot(x_values, y_values[step])  # Plot with updated y_values index
     visualize_sites(ax, sites)
-    visualize_vertices(ax, voronoi_diagram.beachline.vertices)
-    ax.set_xlim(0, 10)
+    visualize_vertices(ax, data[step]["vertices"])
+    ax.set_xlim(min(x_values), max(x_values))
     ax.set_ylim(0, 10)
     ax.set_xlabel("X")
     ax.set_ylabel("Y")

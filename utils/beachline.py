@@ -76,10 +76,22 @@ class Beachline:
         :return: The arc that intersects with the sweep line at given x value, or None if there is no intersection
         """
         node = self.first_arc
+
         while node:
+
+            # print("X:", x)
+            # print("Checking arc:", node)
+            # print("left neighbor:", node.left_neighbor)
+            # print("right neighbor:", node.right_neighbor)
+
             # get intersection on both sides to find the range of the current arc
             left_intersection = self.get_left_intersection(node, sweep_y)
             right_intersection = self.get_right_intersection(node, sweep_y)
+
+            # print("left intersection:", left_intersection)
+
+            # if left_intersection and not right_intersection:
+            #     return None
 
             # we can assume that all nodes are valid leafs because old ones get deleted, so no need to check if they are valid leafs
             if left_intersection <= x <= right_intersection:
@@ -103,6 +115,7 @@ class Beachline:
 
     def get_beachline(self, sweep_y, positions: list[float]):
         y_values = []
+        colors = []
         node = self.first_arc
 
         for x in positions:
@@ -110,11 +123,11 @@ class Beachline:
                 left_intersection = self.get_left_intersection(node, sweep_y)
                 right_intersection = self.get_right_intersection(node, sweep_y)
 
-                # print("Left intersection:", left_intersection)
-                # print("Right intersection:", right_intersection)
-
                 if left_intersection <= x <= right_intersection:
                     y_values.append(node.evaluate_arc(x, sweep_y))
+                    # Assign a color based on the site, ensuring consistent color coding
+                    color = hash(node.site) % 256  # Simple hash for color coding
+                    colors.append(color)
                     break
 
                 if x < left_intersection:
@@ -122,7 +135,7 @@ class Beachline:
                 else:
                     node = node.right_neighbor
 
-        return y_values
+        return y_values, colors
 
     def get_face(self, site: Site):
         if site not in self.faces.keys():
@@ -143,7 +156,7 @@ class Beachline:
         :return: The left, middle and right arcs of the new site, or None if no arc is found
         """
 
-        sweep_y = new_arc.site.y + 0.01
+        sweep_y = new_arc.site.y + 0.001
         arc_to_split = self.find_arc(new_arc.site.x, sweep_y)
 
         if not arc_to_split:
@@ -198,6 +211,8 @@ class Beachline:
         return self.intersect_x(arc, arc.right_neighbor, sweep_y)[0]
 
     def handle_circle_event(self, circle_event: CircleEvent):
+        # if circle_event.middle_arc == self.first_arc:
+        #     return
         self.remove_arc(circle_event.middle_arc)
 
         vertex = Vertex(circle_event.circumcenter)
@@ -242,5 +257,8 @@ class Beachline:
             circle_event.left_arc.right_neighbor = circle_event.right_arc
         if circle_event.right_arc.left_neighbor:
             circle_event.right_arc.left_neighbor = circle_event.left_arc
+
+        while self.first_arc.left_neighbor:
+            self.first_arc = self.first_arc.left_neighbor
 
         return circle_event.left_arc, circle_event.middle_arc, circle_event.right_arc

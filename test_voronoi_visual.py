@@ -1,5 +1,6 @@
 from copy import copy
 from utils.arc import Arc, Site
+from utils.dcel import HalfEdge
 from utils.voronoi_diagram import VoronoiDiagram
 
 
@@ -17,8 +18,33 @@ def visualize_sites(ax, sites):  # Plot the original sites in red
         ax.plot(site.site.x, site.site.y, "ro")  # red dots
 
 
-def visualize_edges(edges):
-    pass
+def visualize_edges(ax, edges: list[HalfEdge]):
+    for edge in edges:
+        if edge.twin and edge.twin.origin:
+            ax.plot(
+                [edge.origin.x, edge.twin.origin.x],
+                [edge.origin.y, edge.twin.origin.y],
+                "b-",
+            )  # blue lines
+        elif edge.next and edge.next.origin:
+            ax.plot(
+                [edge.origin.x, edge.next.origin.x],
+                [edge.origin.y, edge.next.origin.y],
+                "b-",
+            )  # blue lines
+        elif edge.prev and edge.prev.origin:
+            ax.plot(
+                [edge.origin.x, edge.prev.origin.x],
+                [edge.origin.y, edge.prev.origin.y],
+                "b-",
+            )  # blue lines
+        else:
+            direction = edge.calculate_direction()
+            ax.plot(
+                [edge.origin.x, edge.origin.x + direction.x],
+                [edge.origin.y, edge.origin.y + direction.y],
+                "b-",
+            )  # blue lines
 
 
 def visualize_vertices(ax, vertices):
@@ -33,37 +59,44 @@ def visualize_vertices(ax, vertices):
 
 voronoi_diagram.add_site_events(sites)
 beachlines = []
-x_values = [i * 0.01 - 6 for i in range(int(26 / 0.01) + 1)]
+x_values = [i * 0.01 - 10 for i in range(int(36 / 0.01) + 1)]
 y_resolution = 0.1
 y_values = []
 data = []
 step = 0
+
+processed_events = []
+
 while not voronoi_diagram.event_queue.is_empty():
     voronoi_diagram.process_next_event(step)
-    sorted_events = sorted(
-        voronoi_diagram.event_queue.queue, key=lambda event: event.site.y
-    )
-    next_event_y = sorted_events[0].site.y if sorted_events else None
+    # sorted_events = sorted(
+    #     voronoi_diagram.event_queue.queue, key=lambda event: event.site.y
+    # )
+    # next_event_y = sorted_events[0].site.y if sorted_events else None
+    processed_events.append(voronoi_diagram.sweep_y)
     current_y = voronoi_diagram.sweep_y
-    while (
-        next_event_y
-        and current_y < next_event_y
-        or (not next_event_y and current_y < 12)
-    ):
-        data.append(
-            {
-                "vertices": copy(voronoi_diagram.beachline.vertices),
-                "edges": copy(voronoi_diagram.beachline.edges),
-                "faces": {
-                    k: copy(v) for k, v in voronoi_diagram.beachline.faces.items()
-                },
-            }
-        )
-        y_values.append(
-            voronoi_diagram.beachline.get_beachline(current_y + 0.001, x_values)
-        )
-        current_y += y_resolution
-        step += 1
+    # current_y = voronoi_diagram.sweep_y
+    # while (
+    #     next_event_y
+    #     and current_y < next_event_y
+    #     # or (not next_event_y and current_y < 12)
+    # ):
+    # print(current_y)
+    data.append(
+        {
+            "vertices": copy(voronoi_diagram.beachline.vertices),
+            "edges": copy(voronoi_diagram.beachline.edges),
+            "faces": {k: copy(v) for k, v in voronoi_diagram.beachline.faces.items()},
+        }
+    )
+
+    current_y_values, colors = voronoi_diagram.beachline.get_beachline(
+        current_y + 0.001, x_values
+    )
+    y_values.append({"values": current_y_values, "colors": colors})
+    # current_y += y_resolution
+    step += 1
+print(processed_events)
 
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Button, Slider, TextBox
@@ -76,9 +109,22 @@ current_step = 0
 def update_plot(step):
     """Clear and redraw the plot with the y_values at the specified step."""
     ax.cla()  # Clear the current plot area
-    ax.plot(x_values, y_values[step])  # Plot with updated y_values index
+    color_map = {}
+    for y, color_int in zip(y_values[step]["values"], y_values[step]["colors"]):
+        if color_int not in color_map:
+            red = (color_int >> 16) & 0xFF
+            green = (color_int >> 8) & 0xFF
+            blue = color_int & 0xFF
+            color_map[color_int] = (red / 255, green / 255, blue / 255)
+    ax.scatter(
+        x_values,
+        y_values[step]["values"],
+        color=[color_map[c] for c in y_values[step]["colors"]],
+        s=3,  # Set the size of the scatter dots to be smaller
+    )
     visualize_sites(ax, sites)
     visualize_vertices(ax, data[step]["vertices"])
+    visualize_edges(ax, data[step]["edges"])
     ax.set_xlim(min(x_values), max(x_values))
     ax.set_ylim(0, 10)
     ax.set_xlabel("X")

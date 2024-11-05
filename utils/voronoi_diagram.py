@@ -10,6 +10,7 @@ class VoronoiDiagram:
         self.event_queue: EventQueue = EventQueue()
         self.bounding_box: list[Site] = [Site(0, 0), Site(10, 10)]
         self.sweep_y = 0
+        self.max_sweep_line_value = 0
 
     def add_site_events(self, sites: list[Site]):
         for site in sites:
@@ -23,9 +24,11 @@ class VoronoiDiagram:
         event = self.event_queue.pop()
         if debug_index:
             print(debug_index)
-        if debug_index == 88:
-            print(event)
+
         self.sweep_y = event.site.y
+        if debug_index == 9:
+            print(event)
+        # self.max_sweep_line_value = max(self.max_sweep_line_value, self.sweep_y)
 
         if isinstance(event, SiteEvent):
             new_arc = Arc(event.site)
@@ -53,23 +56,16 @@ class VoronoiDiagram:
                 print("Arcs not next to each other")
                 return
 
-            # arc_to_delete = self.beachline.find_arc(event.site.x, self.sweep_y - 0.01)
-            # print("Arc to delete:", arc_to_delete)
-            # print("Middle arc:", event.middle_arc)
-            # if arc_to_delete.site != event.middle_arc.site:
-            # return
-            # if
+            arc_below = self.beachline.find_arc(event.site.x, self.sweep_y + 0.01)
+            if (
+                arc_below
+                and arc_below != event.middle_arc
+                and arc_below != event.left_arc
+                and arc_below != event.right_arc
+            ):
+                print("Arc below doesn not appear in event")
+                return
             left, deleted_middle, right = self.beachline.handle_circle_event(event)
-
-            # print(
-            #     "Left arc:",
-            #     left,
-            #     "Left Left neighbor:",
-            #     left.left_neighbor,
-            #     "Left Right neighbor:",
-            #     left.right_neighbor,
-            # )
-            # print("Deleted middle arc:", deleted_middle
 
             print("Checking circle event with left arc:", left)
             self.check_circle_event(left, self.sweep_y, event)
@@ -90,6 +86,7 @@ class VoronoiDiagram:
                 event.left_arc == arc
                 or event.right_arc == arc
                 or event.middle_arc == arc
+                # or not self.beachline.find_arc_by_ref(arc)
             ):
                 print("Removing event:", event)
                 self.event_queue.queue.remove(event)
@@ -104,6 +101,8 @@ class VoronoiDiagram:
             print(
                 "Checking Circle event Left: ",
                 middle.left_neighbor,
+                "Middle:",
+                middle,
                 "Right:",
                 middle.right_neighbor,
             )

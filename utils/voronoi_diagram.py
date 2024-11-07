@@ -21,30 +21,21 @@ class VoronoiDiagram:
         self.bounding_box = [lower_bound, upper_bound]
 
     def process_next_event(self, debug_index=None):
-        event = self.event_queue.pop()
         if debug_index:
             print(debug_index)
-
+        event = self.event_queue.pop()
         self.sweep_y = event.site.y
-        if debug_index == 9:
-            print(event)
-        # self.max_sweep_line_value = max(self.max_sweep_line_value, self.sweep_y)
+        print("Current Event:", event)
 
         if isinstance(event, SiteEvent):
             new_arc = Arc(event.site)
             left, middle, right = self.beachline.insert_arc(new_arc)
 
-            print("Checking circle event with left arc:", left)
             self.check_circle_event(left, self.sweep_y)
-            print("Checking circle event with middle arc:", middle)
             self.check_circle_event(middle, self.sweep_y)
-            print("Checking circle event with right arc:", right)
             self.check_circle_event(right, self.sweep_y)
 
         elif isinstance(event, CircleEvent):
-
-            print("Processign Circle Event:", event)
-            print("With circumcenter:", event.circumcenter)
 
             # sanity check, confirm that arcs that produced the event are actually next to each other when the event occurs
             found_arc = self.beachline.find_arc_by_ref(event.left_arc)
@@ -65,17 +56,11 @@ class VoronoiDiagram:
             ):
                 print("Arc below doesn not appear in event")
                 return
+
             left, deleted_middle, right = self.beachline.handle_circle_event(event)
 
-            print("Checking circle event with left arc:", left)
             self.check_circle_event(left, self.sweep_y, event)
-            print("Checking circle event with right arc:", right)
             self.check_circle_event(right, self.sweep_y, event)
-            if (
-                left.right_neighbor == deleted_middle
-                or right.left_neighbor == deleted_middle
-            ):
-                print("Re-linking didn't work apparently")
             self.remove_circle_events(deleted_middle)
 
     def remove_circle_events(self, arc: Arc):
@@ -86,7 +71,6 @@ class VoronoiDiagram:
                 event.left_arc == arc
                 or event.right_arc == arc
                 or event.middle_arc == arc
-                # or not self.beachline.find_arc_by_ref(arc)
             ):
                 print("Removing event:", event)
                 self.event_queue.queue.remove(event)
@@ -95,8 +79,6 @@ class VoronoiDiagram:
         if middle and middle.left_neighbor and middle.right_neighbor:
             if middle.left_neighbor.site == middle.right_neighbor.site:
                 return
-
-            print("First arc for reference: ", self.beachline.first_arc)
 
             print(
                 "Checking Circle event Left: ",
@@ -118,6 +100,7 @@ class VoronoiDiagram:
                 ):
                     print("Circle event already in queue")
                     return
+
             if circle_event:
                 print("Inserting circle event:", circle_event)
                 self.event_queue.insert(circle_event)
@@ -132,17 +115,8 @@ class VoronoiDiagram:
             print("Circumcenter not found")
             return None
 
-        # if (
-        #     circumcenter.x < self.bounding_box[0].x
-        #     or circumcenter.x > self.bounding_box[1].x
-        #     or circumcenter.y < self.bounding_box[0].y
-        #     or circumcenter.y > self.bounding_box[1].y
-        # ):
-        #     print("Circumcenter out of bounds")
-        #     return None
-
         event_location = Site(circumcenter.x, circumcenter.y + circumradius)
-        if event_location.y < sweep_y:
+        if event_location.y <= sweep_y:
             print("Event location below sweep line")
             return None
 

@@ -43,14 +43,3 @@ class Test_VoronoiDiagram(unittest.TestCase):
             edge = edge.next
             if edge == face.outer_component or edge is None:
                 break
-
-        face = self.voronoi_diagram.beachline.get_face(self.site3.site)
-        print(face)
-        edge = face.outer_component
-        print("Edge:", edge)
-        print("Edges of face:")
-        while True:
-            print(edge)
-            edge = edge.next
-            if edge == face.outer_component or edge is None:
-                break

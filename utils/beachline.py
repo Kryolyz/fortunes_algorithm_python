@@ -17,7 +17,7 @@ class Beachline:
         """
         Returns the x-coordinate of the intersection between the two given arcs.
 
-        Note that this function assumes that the two arcs are adjacent in the beachline.
+        Note that this function assumes that the two arcs are adjacent in tndlehe beachline.
         It also assumes that the sweep line is horizontal and moving upwards.
 
         :param arc: The first arc
@@ -113,7 +113,7 @@ class Beachline:
                 node = node.right_neighbor
         return None
 
-    def get_beachline(self, sweep_y, positions: list[float]):
+    def evaluate_beachline_parabolas(self, sweep_y, positions: list[float]):
         y_values = []
         colors = []
         node = self.first_arc
@@ -126,7 +126,7 @@ class Beachline:
                 if left_intersection <= x <= right_intersection:
                     y_values.append(node.evaluate_arc(x, sweep_y))
                     # Assign a color based on the site, ensuring consistent color coding
-                    color = hash(node.site) % 256  # Simple hash for color coding
+                    color = hash(node.site.x) % 256  # Simple hash for color coding
                     colors.append(color)
                     break
 
@@ -211,8 +211,6 @@ class Beachline:
         return self.intersect_x(arc, arc.right_neighbor, sweep_y)[0]
 
     def handle_circle_event(self, circle_event: CircleEvent):
-        # if circle_event.middle_arc == self.first_arc:
-        #     return
         self.remove_arc(circle_event.middle_arc)
 
         vertex = Vertex(circle_event.circumcenter)

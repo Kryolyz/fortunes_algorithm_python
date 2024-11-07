@@ -7,7 +7,7 @@ from utils.voronoi_diagram import VoronoiDiagram
 voronoi_diagram = VoronoiDiagram()
 import random
 
-random.seed(1)
+random.seed(0)
 sites = [Arc(Site(random.uniform(0, 10), random.uniform(0, 10))) for _ in range(7)]
 for site in sorted(sites, key=lambda site: site.site.y):
     print(site)
@@ -69,19 +69,9 @@ processed_events = []
 
 while not voronoi_diagram.event_queue.is_empty():
     voronoi_diagram.process_next_event(step)
-    # sorted_events = sorted(
-    #     voronoi_diagram.event_queue.queue, key=lambda event: event.site.y
-    # )
-    # next_event_y = sorted_events[0].site.y if sorted_events else None
     processed_events.append(voronoi_diagram.sweep_y)
     current_y = voronoi_diagram.sweep_y
-    # current_y = voronoi_diagram.sweep_y
-    # while (
-    #     next_event_y
-    #     and current_y < next_event_y
-    #     # or (not next_event_y and current_y < 12)
-    # ):
-    # print(current_y)
+
     data.append(
         {
             "vertices": copy(voronoi_diagram.beachline.vertices),
@@ -90,11 +80,10 @@ while not voronoi_diagram.event_queue.is_empty():
         }
     )
 
-    current_y_values, colors = voronoi_diagram.beachline.get_beachline(
+    current_y_values, colors = voronoi_diagram.beachline.evaluate_beachline_parabolas(
         current_y + 0.001, x_values
     )
     y_values.append({"values": current_y_values, "colors": colors})
-    # current_y += y_resolution
     step += 1
 print(processed_events)
 
@@ -129,7 +118,7 @@ def update_plot(step):
     ax.set_ylim(0, 10)
     ax.set_xlabel("X")
     ax.set_ylabel("Y")
-    ax.set_title(f"Voronoi Diagram Visualization - Step {step + 1}")
+    ax.set_title(f"Voronoi Diagram Visualization - Step {step}")
     plt.draw()  # Redraw the updated plot
 
 
